@@ -1,78 +1,105 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @trojanzhex
+# (c) @soory_Bk
 
+from pyrogram import filters, Client
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from bot import Translation # pylint: disable=import-error
+from bot.database import Database # pylint: disable=import-error
 
-from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from script import script
+db = Database()
 
-
-@Client.on_message(filters.command(["start"]) & filters.private)
-async def start(client, message):
+@Client.on_message(filters.command(["start"]) & filters.private, group=1)
+async def start(bot, update):
+    
     try:
-        await message.reply_text(
-            text=script.START_MSG.format(message.from_user.mention),
-            disable_web_page_preview=True,
-            reply_markup=InlineKeyboardMarkup(
-                [
+        file_uid = update.command[1]
+    except IndexError:
+        file_uid = False
+    
+    if file_uid:
+        file_id, file_name, file_caption, file_type = await db.get_file(file_uid)
+        
+        if (file_id or file_type) == None:
+            return
+        
+        caption = file_caption if file_caption != ("" or None) else ("<code>" + file_name + "</code>")
+        
+        if file_type == "document":
+        
+            await bot.send_document(
+                chat_id=update.chat.id,
+                document = file_id,
+                caption = caption,
+                parse_mode="html",
+                reply_to_message_id=update.message_id,
+                reply_markup=InlineKeyboardMarkup(
                     [
-                        InlineKeyboardButton("HELP", callback_data="help_data"),
-                        InlineKeyboardButton("ABOUT", callback_data="about_data"),
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            "⭕️ JOIN OUR CHANNEL ⭕️", url="https://t.me/TroJanzHEX")
+                        [
+                            InlineKeyboardButton
+                                (
+                                    'Developer', url="https://t.me/Soory_Bk"
+                                )
+                        ]
                     ]
-                ]
-            ),
-            reply_to_message_id=message.message_id
-        )
-    except:
-        pass
+                )
+            )
 
-@Client.on_message(filters.command(["help"]) & filters.private)
-async def help(client, message):
-    try:
-        await message.reply_text(
-            text=script.HELP_MSG,
-            disable_web_page_preview=True,
-            reply_markup=InlineKeyboardMarkup(
-                [
+        elif file_type == "video":
+        
+            await bot.send_video(
+                chat_id=update.chat.id,
+                video = file_id,
+                caption = caption,
+                parse_mode="html",
+                reply_markup=InlineKeyboardMarkup(
                     [
-                        InlineKeyboardButton("BACK", callback_data="start_data"),
-                        InlineKeyboardButton("ABOUT", callback_data="about_data"),
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            "⭕️ SUPPORT ⭕️", url="https://t.me/TroJanzSupport")
+                        [
+                            InlineKeyboardButton
+                                (
+                                    'Developer', url="https://t.me/Soory_Bk"
+                                )
+                        ]
                     ]
-                ]
-            ),
-            reply_to_message_id=message.message_id
-        )
-    except:
-        pass
+                )
+            )
+            
+        elif file_type == "audio":
+        
+            await bot.send_audio(
+                chat_id=update.chat.id,
+                audio = file_id,
+                caption = caption,
+                parse_mode="html",
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton
+                                (
+                                    'Developer', url="https://t.me/Soory_Bk"
+                                )
+                        ]
+                    ]
+                )
+            )
 
-@Client.on_message(filters.command(["about"]) & filters.private)
-async def about(client, message):
-    try:
-        await message.reply_text(
-            text=script.ABOUT_MSG,
-            disable_web_page_preview=True,
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton("BACK", callback_data="help_data"),
-                        InlineKeyboardButton("START", callback_data="start_data"),
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            "SOURCE CODE", url="https://github.com/TroJanzHEX/Auto-Filter-Bot-V2")
-                    ]
-                ]
-            ),
-            reply_to_message_id=message.message_id
-        )
-    except:
-        pass
+        else:
+            print(file_type)
+        
+        return
+
+    buttons = [[
+        InlineKeyboardButton('⚜️Channel⚜️', url='https://t.me/VIP_MOVIES_TAMIL'),
+        InlineKeyboardButton('⚜️Group⚜️', url ='https://t.me/joinchat/T4oAkqsgqfcIKaYR')
+    ]]
+    
+    reply_markup = InlineKeyboardMarkup(buttons)
+    
+    await bot.send_message(
+        chat_id=update.chat.id,
+        text=Translation.START_TEXT.format(
+                update.from_user.first_name),
+        reply_markup=reply_markup,
+        parse_mode="html",
+        reply_to_message_id=update.message_id
+    )
